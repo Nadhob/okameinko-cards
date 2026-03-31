@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Okameinko Cards — Hiragana Flashcards</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'Outfit', sans-serif; overflow-x: hidden; }
+  input, button, textarea { font-family: inherit; }
+  @keyframes petalFall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 0.7; }
+    100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-in { animation: fadeIn 0.35s ease-out; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(219,112,147,0.2); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const DEFAULT_WORDS = [
+  { hiragana: "ねこ", romaji: "neko", english: "cat" },
+  { hiragana: "いぬ", romaji: "inu", english: "dog" },
+  { hiragana: "みず", romaji: "mizu", english: "water" },
+  { hiragana: "ひ", romaji: "hi", english: "fire" },
+  { hiragana: "やま", romaji: "yama", english: "mountain" },
+  { hiragana: "かわ", romaji: "kawa", english: "river" },
+  { hiragana: "はな", romaji: "hana", english: "flower" },
+  { hiragana: "つき", romaji: "tsuki", english: "moon" },
+  { hiragana: "ほし", romaji: "hoshi", english: "star" },
+  { hiragana: "あめ", romaji: "ame", english: "rain" },
+  { hiragana: "かぜ", romaji: "kaze", english: "wind" },
+  { hiragana: "そら", romaji: "sora", english: "sky" },
+  { hiragana: "うみ", romaji: "umi", english: "sea" },
+  { hiragana: "き", romaji: "ki", english: "tree" },
+  { hiragana: "くも", romaji: "kumo", english: "cloud" },
+  { hiragana: "ゆき", romaji: "yuki", english: "snow" },
+  { hiragana: "たべもの", romaji: "tabemono", english: "food" },
+  { hiragana: "のみもの", romaji: "nomimono", english: "drink" },
+  { hiragana: "ともだち", romaji: "tomodachi", english: "friend" },
+  { hiragana: "せんせい", romaji: "sensei", english: "teacher" },
+  { hiragana: "がくせい", romaji: "gakusei", english: "student" },
+  { hiragana: "しごと", romaji: "shigoto", english: "work" },
+  { hiragana: "いえ", romaji: "ie", english: "house" },
+  { hiragana: "まち", romaji: "machi", english: "town" },
+  { hiragana: "くるま", romaji: "kuruma", english: "car" },
+  { hiragana: "でんしゃ", romaji: "densha", english: "train" },
+  { hiragana: "ほん", romaji: "hon", english: "book" },
+  { hiragana: "おんがく", romaji: "ongaku", english: "music" },
+  { hiragana: "えいが", romaji: "eiga", english: "movie" },
+  { hiragana: "あさ", romaji: "asa", english: "morning" },
+  { hiragana: "よる", romaji: "yoru", english: "night" },
+  { hiragana: "きょう", romaji: "kyou", english: "today" },
+  { hiragana: "あした", romaji: "ashita", english: "tomorrow" },
+  { hiragana: "おおきい", romaji: "ookii", english: "big" },
+  { hiragana: "ちいさい", romaji: "chiisai", english: "small" },
+  { hiragana: "あたらしい", romaji: "atarashii", english: "new" },
+  { hiragana: "ふるい", romaji: "furui", english: "old" },
+  { hiragana: "たかい", romaji: "takai", english: "expensive / tall" },
+  { hiragana: "やすい", romaji: "yasui", english: "cheap" },
+  { hiragana: "おいしい", romaji: "oishii", english: "delicious" },
+];
+
+const HIRAGANA_CHARS = [
+  "あ","い","う","え","お",
+  "か","き","く","け","こ",
+  "さ","し","す","せ","そ",
+  "た","ち","つ","て","と",
+  "な","に","ぬ","ね","の",
+  "は","ひ","ふ","へ","ほ",
+  "ま","み","む","め","も",
+  "や","ゆ","よ",
+  "ら","り","る","れ","ろ",
+  "わ","を","ん",
+  "が","ぎ","ぐ","げ","ご",
+  "ざ","じ","ず","ぜ","ぞ",
+  "だ","ぢ","づ","で","ど",
+  "ば","び","ぶ","べ","ぼ",
+  "ぱ","ぴ","ぷ","ぺ","ぽ",
+  "ゃ","ゅ","ょ","っ","ー",
+];
+
+const STORAGE_KEY = "hiragana-cards-words";
+
+function loadWords() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+  return DEFAULT_WORDS;
+}
+
+function saveWords(words) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(words)); } catch {}
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/* ── Petals ── */
+function Petals() {
+  const petals = useRef(
+    Array.from({ length: 14 }, (_, i) => ({
+      id: i, left: Math.random() * 100, delay: Math.random() * 10,
+      dur: 7 + Math.random() * 7, size: 8 + Math.random() * 14, rot: Math.random() * 360,
+    }))
+  ).current;
+  return (
+    <div style={{ position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 0 }}>
+      {petals.map(p => (
+        <div key={p.id} style={{
+          position: "absolute", left: `${p.left}%`, top: -20,
+          width: p.size, height: p.size, borderRadius: "50% 0 50% 50%",
+          background: "rgba(219,112,147,0.18)",
+          animation: `petalFall ${p.dur}s ${p.delay}s linear infinite`,
+          transform: `rotate(${p.rot}deg)`,
+        }} />
+      ))}
+    </div>
+  );
+}
+
+/* ── Shared styles ── */
+const btnPrimary = {
+  background: "linear-gradient(135deg, #db7093, #c06080)", color: "white",
+  border: "none", borderRadius: 12, padding: "10px 28px", fontSize: 15,
+  fontWeight: 600, cursor: "pointer", fontFamily: "'Outfit', sans-serif",
+  boxShadow: "0 4px 16px rgba(219,112,147,0.3)", transition: "all .2s",
+};
+const btnGhost = {
+  background: "rgba(255,255,255,0.6)", color: "#8b5e6b",
+  border: "1px solid rgba(219,112,147,0.3)", borderRadius: 12,
+  padding: "10px 20px", fontSize: 15, cursor: "pointer",
+  fontFamily: "'Outfit', sans-serif", transition: "all .2s",
+};
+const inputStyle = {
+  flex: 1, minWidth: 80, padding: "8px 12px",
+  border: "1px solid rgba(219,112,147,0.3)", borderRadius: 10,
+  fontSize: 14, outline: "none", fontFamily: "'Noto Sans JP', sans-serif",
+};
+const cardBox = {
+  background: "rgba(255,255,255,0.78)", backdropFilter: "blur(12px)",
+  borderRadius: 20, padding: "40px 36px",
+  boxShadow: "0 8px 32px rgba(139,94,107,0.1)",
+  border: "1px solid rgba(219,112,147,0.15)", textAlign: "center",
+  minWidth: 300, maxWidth: 500, width: "100%",
+};
+
+/* ── Result badge ── */
+function ResultBadge({ correct }) {
+  return (
+    <div style={{
+      display: "inline-block", padding: "4px 16px", borderRadius: 20, fontSize: 14, fontWeight: 600,
+      background: correct ? "rgba(144,238,144,0.25)" : "rgba(255,99,71,0.15)",
+      color: correct ? "#2d7a2d" : "#b33a3a", marginTop: 6,
+    }}>
+      {correct ? "✓ Correct!" : "✗ Wrong"}
+    </div>
+  );
+}
+
+/* ── Hiragana keyboard ── */
+function HiraganaKeyboard({ onPick }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ marginTop: 8 }}>
+      <button onClick={() => setOpen(!open)} style={{
+        background: "none", border: "1px solid rgba(219,112,147,0.4)",
+        borderRadius: 8, padding: "6px 14px", color: "#8b5e6b",
+        cursor: "pointer", fontSize: 13, fontFamily: "'Noto Sans JP', sans-serif",
+      }}>
+        {open ? "▲ Hide keyboard" : "▼ Hiragana keyboard"}
+      </button>
+      {open && (
+        <div style={{
+          display: "flex", flexWrap: "wrap", gap: 4, marginTop: 8,
+          maxWidth: 460, justifyContent: "center",
+        }}>
+          {HIRAGANA_CHARS.map(ch => (
+            <button key={ch} onClick={() => onPick(ch)} style={{
+              width: 38, height: 38, border: "1px solid rgba(219,112,147,0.25)",
+              borderRadius: 6, background: "rgba(255,255,255,0.7)", cursor: "pointer",
+              fontSize: 17, fontFamily: "'Noto Sans JP', sans-serif", color: "#4a3540",
+              transition: "all .12s",
+            }}>
+              {ch}
+            </button>
+          ))}
+          <button onClick={() => onPick("BACKSPACE")} style={{
+            width: 64, height: 38, border: "1px solid rgba(219,112,147,0.25)",
+            borderRadius: 6, background: "rgba(255,240,245,0.7)", cursor: "pointer",
+            fontSize: 13, color: "#8b5e6b",
+          }}>
+            ← del
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Mode 1: Hiragana → English ── */
+function ModeHiragana({ words }) {
+  const [queue, setQueue] = useState(() => shuffle(words));
+  const [idx, setIdx] = useState(0);
+  const [romajiInput, setRomajiInput] = useState("");
+  const [englishInput, setEnglishInput] = useState("");
+  const [revealed, setRevealed] = useState(false);
+  const [result, setResult] = useState(null);
+  const [stats, setStats] = useState({ correct: 0, total: 0 });
+  const romajiRef = useRef(null);
+
+  useEffect(() => {
+    setQueue(shuffle(words)); setIdx(0); setRevealed(false);
+    setResult(null); setRomajiInput(""); setEnglishInput("");
+  }, [words]);
+
+  useEffect(() => { if (!revealed && romajiRef.current) romajiRef.current.focus(); }, [idx, revealed]);
+
+  const card = queue[idx % queue.length];
+  if (!card) return null;
+
+  const handleCheck = () => {
+    const rOk = romajiInput.trim().toLowerCase() === card.romaji.toLowerCase();
+    const eOk = card.english.toLowerCase().split(/\s*\/\s*/).some(v => v.trim() === englishInput.trim().toLowerCase());
+    setResult({ romaji: rOk, english: eOk });
+    setRevealed(true);
+    setStats(s => ({ correct: s.correct + (rOk && eOk ? 1 : 0), total: s.total + 1 }));
+  };
+
+  const handleNext = () => {
+    if (idx + 1 >= queue.length) setQueue(shuffle(words));
+    setIdx(i => i + 1); setRevealed(false); setResult(null);
+    setRomajiInput(""); setEnglishInput("");
+  };
+
+  const handleKeyDown = e => { if (e.key === "Enter") { revealed ? handleNext() : handleCheck(); } };
+
+  return (
+    <div className="fade-in" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
+      <div style={{ fontSize: 12, color: "#b08a94", minHeight: 18 }}>
+        {stats.total > 0 && `${stats.correct}/${stats.total} correct`}
+      </div>
+      <div style={cardBox}>
+        <div style={{ fontSize: 76, fontFamily: "'Noto Sans JP', sans-serif", color: "#4a3540", marginBottom: 8, letterSpacing: 4 }}>
+          {card.hiragana}
+        </div>
+        <div style={{ fontSize: 11, color: "#c4a0aa", marginBottom: 20 }}>What does this mean?</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div>
+            <label style={{ fontSize: 12, color: "#8b5e6b", display: "block", marginBottom: 4 }}>Romaji</label>
+            <input ref={romajiRef} value={romajiInput} onChange={e => setRomajiInput(e.target.value)}
+              onKeyDown={handleKeyDown} disabled={revealed} placeholder="e.g. neko"
+              style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px",
+                border: "1px solid rgba(219,112,147,0.3)", borderRadius: 10, fontSize: 16,
+                outline: "none", background: revealed ? "rgba(255,255,255,0.5)" : "white",
+                fontFamily: "inherit", textAlign: "center" }} />
+            {result && <ResultBadge correct={result.romaji} />}
+          </div>
+          <div>
+            <label style={{ fontSize: 12, color: "#8b5e6b", display: "block", marginBottom: 4 }}>English meaning</label>
+            <input value={englishInput} onChange={e => setEnglishInput(e.target.value)}
+              onKeyDown={handleKeyDown} disabled={revealed} placeholder="e.g. cat"
+              style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px",
+                border: "1px solid rgba(219,112,147,0.3)", borderRadius: 10, fontSize: 16,
+                outline: "none", background: revealed ? "rgba(255,255,255,0.5)" : "white",
+                fontFamily: "inherit", textAlign: "center" }} />
+            {result && <ResultBadge correct={result.english} />}
+          </div>
+        </div>
+        {revealed && (
+          <div style={{ marginTop: 16, padding: 12, background: "rgba(219,112,147,0.06)",
+            borderRadius: 12, fontSize: 15, color: "#5a3a48" }}>
+            <strong>{card.romaji}</strong> — {card.english}
+          </div>
+        )}
+      </div>
+      <div style={{ display: "flex", gap: 10 }}>
+        {!revealed ? (
+          <button onClick={handleCheck} style={btnPrimary}>Check</button>
+        ) : (
+          <button onClick={handleNext} style={btnPrimary}>Next →</button>
+        )}
+        {!revealed && (
+          <button onClick={() => { setRevealed(true); setStats(s => ({ ...s, total: s.total + 1 })); }} style={btnGhost}>
+            Reveal
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── Mode 2: English → Hiragana ── */
+function ModeEnglish({ words }) {
+  const [queue, setQueue] = useState(() => shuffle(words));
+  const [idx, setIdx] = useState(0);
+  const [romajiInput, setRomajiInput] = useState("");
+  const [hiraganaInput, setHiraganaInput] = useState("");
+  const [revealed, setRevealed] = useState(false);
+  const [result, setResult] = useState(null);
+  const [stats, setStats] = useState({ correct: 0, total: 0 });
+  const romajiRef = useRef(null);
+
+  useEffect(() => {
+    setQueue(shuffle(words)); setIdx(0); setRevealed(false);
+    setResult(null); setRomajiInput(""); setHiraganaInput("");
+  }, [words]);
+
+  useEffect(() => { if (!revealed && romajiRef.current) romajiRef.current.focus(); }, [idx, revealed]);
+
+  const card = queue[idx % queue.length];
+  if (!card) return null;
+
+  const handleKeyboardPick = ch => {
+    if (ch === "BACKSPACE") setHiraganaInput(v => [...v].slice(0, -1).join(""));
+    else setHiraganaInput(v => v + ch);
+  };
+
+  const handleCheck = () => {
+    const rOk = romajiInput.trim().toLowerCase() === card.romaji.toLowerCase();
+    const hOk = hiraganaInput.trim() === card.hiragana;
+    setResult({ romaji: rOk, hiragana: hOk });
+    setRevealed(true);
+    setStats(s => ({ correct: s.correct + (rOk && hOk ? 1 : 0), total: s.total + 1 }));
+  };
+
+  const handleNext = () => {
+    if (idx + 1 >= queue.length) setQueue(shuffle(words));
+    setIdx(i => i + 1); setRevealed(false); setResult(null);
+    setRomajiInput(""); setHiraganaInput("");
+  };
+
+  const handleKeyDown = e => { if (e.key === "Enter") { revealed ? handleNext() : handleCheck(); } };
+
+  return (
+    <div className="fade-in" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
+      <div style={{ fontSize: 12, color: "#b08a94", minHeight: 18 }}>
+        {stats.total > 0 && `${stats.correct}/${stats.total} correct`}
+      </div>
+      <div style={cardBox}>
+        <div style={{ fontSize: 11, color: "#c4a0aa", marginBottom: 4 }}>Write in hiragana & romaji:</div>
+        <div style={{ fontSize: 40, fontWeight: 700, color: "#4a3540", marginBottom: 20, fontFamily: "'Outfit', sans-serif" }}>
+          {card.english}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div>
+            <label style={{ fontSize: 12, color: "#8b5e6b", display: "block", marginBottom: 4 }}>Romaji</label>
+            <input ref={romajiRef} value={romajiInput} onChange={e => setRomajiInput(e.target.value)}
+              onKeyDown={handleKeyDown} disabled={revealed} placeholder="e.g. neko"
+              style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px",
+                border: "1px solid rgba(219,112,147,0.3)", borderRadius: 10, fontSize: 16,
+                outline: "none", background: revealed ? "rgba(255,255,255,0.5)" : "white",
+                fontFamily: "inherit", textAlign: "center" }} />
+            {result && <ResultBadge correct={result.romaji} />}
+          </div>
+          <div>
+            <label style={{ fontSize: 12, color: "#8b5e6b", display: "block", marginBottom: 4 }}>
+              Hiragana (type or use keyboard)
+            </label>
+            <input value={hiraganaInput} onChange={e => setHiraganaInput(e.target.value)}
+              onKeyDown={handleKeyDown} disabled={revealed} placeholder="e.g. ねこ"
+              style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px",
+                border: "1px solid rgba(219,112,147,0.3)", borderRadius: 10, fontSize: 20,
+                outline: "none", background: revealed ? "rgba(255,255,255,0.5)" : "white",
+                fontFamily: "'Noto Sans JP', sans-serif", textAlign: "center", letterSpacing: 3 }} />
+            {result && <ResultBadge correct={result.hiragana} />}
+            {!revealed && <HiraganaKeyboard onPick={handleKeyboardPick} />}
+          </div>
+        </div>
+        {revealed && (
+          <div style={{ marginTop: 16, padding: 12, background: "rgba(219,112,147,0.06)",
+            borderRadius: 12, fontSize: 15, color: "#5a3a48" }}>
+            <span style={{ fontSize: 28, fontFamily: "'Noto Sans JP', sans-serif" }}>{card.hiragana}</span>
+            {" "}— <strong>{card.romaji}</strong>
+          </div>
+        )}
+      </div>
+      <div style={{ display: "flex", gap: 10 }}>
+        {!revealed ? (
+          <button onClick={handleCheck} style={btnPrimary}>Check</button>
+        ) : (
+          <button onClick={handleNext} style={btnPrimary}>Next →</button>
+        )}
+        {!revealed && (
+          <button onClick={() => { setRevealed(true); setStats(s => ({ ...s, total: s.total + 1 })); }} style={btnGhost}>
+            Reveal
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── Word Manager ── */
+function WordManager({ words, setWords }) {
+  const [newH, setNewH] = useState("");
+  const [newR, setNewR] = useState("");
+  const [newE, setNewE] = useState("");
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkText, setBulkText] = useState("");
+  const [search, setSearch] = useState("");
+  const [confirmReset, setConfirmReset] = useState(false);
+
+  const addWord = () => {
+    if (!newH.trim() || !newR.trim() || !newE.trim()) return;
+    const updated = [...words, { hiragana: newH.trim(), romaji: newR.trim(), english: newE.trim() }];
+    setWords(updated); saveWords(updated);
+    setNewH(""); setNewR(""); setNewE("");
+  };
+
+  const handleBulkAdd = () => {
+    const lines = bulkText.split("\n").filter(l => l.trim());
+    const newWords = [];
+    for (const line of lines) {
+      const parts = line.split(/[,\t;|]/).map(s => s.trim());
+      if (parts.length >= 3) newWords.push({ hiragana: parts[0], romaji: parts[1], english: parts[2] });
+    }
+    if (newWords.length > 0) {
+      const updated = [...words, ...newWords];
+      setWords(updated); saveWords(updated); setBulkText("");
+    }
+  };
+
+  const removeWord = i => {
+    const updated = words.filter((_, j) => j !== i);
+    setWords(updated); saveWords(updated);
+  };
+
+  const resetDefaults = () => {
+    if (!confirmReset) { setConfirmReset(true); return; }
+    setWords(DEFAULT_WORDS); saveWords(DEFAULT_WORDS); setConfirmReset(false);
+  };
+
+  const handleKeyboardPick = ch => {
+    if (ch === "BACKSPACE") setNewH(v => [...v].slice(0, -1).join(""));
+    else setNewH(v => v + ch);
+  };
+
+  const exportWords = () => {
+    const text = words.map(w => `${w.hiragana}, ${w.romaji}, ${w.english}`).join("\n");
+    const blob = new Blob([text], { type: "text/plain" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "hana-words.txt";
+    a.click();
+  };
+
+  const filtered = search
+    ? words.filter(w =>
+        w.hiragana.includes(search) ||
+        w.romaji.toLowerCase().includes(search.toLowerCase()) ||
+        w.english.toLowerCase().includes(search.toLowerCase()))
+    : words;
+
+  return (
+    <div className="fade-in" style={{ maxWidth: 560, margin: "0 auto" }}>
+      {/* Add section */}
+      <div style={{ ...cardBox, textAlign: "left", marginBottom: 20, padding: "24px 24px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <h3 style={{ margin: 0, color: "#5a3a48", fontSize: 16 }}>Add new word</h3>
+          <button onClick={() => setBulkMode(!bulkMode)}
+            style={{ ...btnGhost, fontSize: 12, padding: "4px 12px" }}>
+            {bulkMode ? "Single" : "Bulk add"}
+          </button>
+        </div>
+        {bulkMode ? (
+          <div>
+            <textarea value={bulkText} onChange={e => setBulkText(e.target.value)}
+              placeholder={"ねこ, neko, cat\nいぬ, inu, dog\n(one per line: hiragana, romaji, english)"}
+              rows={5} style={{ width: "100%", boxSizing: "border-box", padding: 10,
+                border: "1px solid rgba(219,112,147,0.3)", borderRadius: 10, fontSize: 14,
+                fontFamily: "'Noto Sans JP', sans-serif", resize: "vertical", outline: "none" }} />
+            <button onClick={handleBulkAdd} style={{ ...btnPrimary, marginTop: 8, fontSize: 13 }}>Add all</button>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <input value={newH} onChange={e => setNewH(e.target.value)} placeholder="ひらがな"
+                style={inputStyle} onKeyDown={e => e.key === "Enter" && addWord()} />
+              <input value={newR} onChange={e => setNewR(e.target.value)} placeholder="romaji"
+                style={inputStyle} onKeyDown={e => e.key === "Enter" && addWord()} />
+              <input value={newE} onChange={e => setNewE(e.target.value)} placeholder="english"
+                style={inputStyle} onKeyDown={e => e.key === "Enter" && addWord()} />
+              <button onClick={addWord} style={{ ...btnPrimary, fontSize: 15, padding: "8px 16px" }}>+</button>
+            </div>
+            <HiraganaKeyboard onPick={handleKeyboardPick} />
+          </div>
+        )}
+      </div>
+
+      {/* Word list */}
+      <div style={{ ...cardBox, textAlign: "left", padding: "20px 24px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+          <h3 style={{ margin: 0, color: "#5a3a48", fontSize: 16 }}>Word list ({words.length})</h3>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button onClick={exportWords} style={{ ...btnGhost, fontSize: 11, padding: "4px 10px" }}>Export</button>
+            <button onClick={resetDefaults}
+              style={{ ...btnGhost, fontSize: 11, padding: "4px 10px",
+                color: confirmReset ? "#c0392b" : "#8b5e6b",
+                borderColor: confirmReset ? "rgba(192,57,43,0.4)" : "rgba(219,112,147,0.3)" }}>
+              {confirmReset ? "Sure? Click again" : "Reset"}
+            </button>
+          </div>
+        </div>
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..."
+          style={{ width: "100%", boxSizing: "border-box", padding: "8px 12px",
+            border: "1px solid rgba(219,112,147,0.2)", borderRadius: 8, fontSize: 13,
+            outline: "none", marginBottom: 12, fontFamily: "inherit" }} />
+        <div style={{ maxHeight: 360, overflowY: "auto" }}>
+          {filtered.map((w, i) => {
+            const realIdx = words.indexOf(w);
+            return (
+              <div key={`${w.hiragana}-${realIdx}`} style={{
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+                padding: "7px 0", borderBottom: "1px solid rgba(219,112,147,0.08)", fontSize: 14,
+              }}>
+                <span style={{ lineHeight: 1.5 }}>
+                  <span style={{ fontFamily: "'Noto Sans JP', sans-serif", fontSize: 17, marginRight: 8 }}>{w.hiragana}</span>
+                  <span style={{ color: "#8b5e6b" }}>{w.romaji}</span>
+                  <span style={{ color: "#b08a94", marginLeft: 8 }}>— {w.english}</span>
+                </span>
+                <button onClick={() => removeWord(realIdx)} title="Remove"
+                  style={{ background: "none", border: "none", color: "#d4a0aa",
+                    cursor: "pointer", fontSize: 18, padding: "2px 8px", borderRadius: 4, flexShrink: 0 }}>
+                  ×
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Main App ── */
+function App() {
+  const [words, setWords] = useState(loadWords);
+  const [mode, setMode] = useState(null);
+  const [page, setPage] = useState("learn");
+
+  const tabs = [
+    { id: "learn", label: "🎴 Learn" },
+    { id: "manage", label: "📝 Words" },
+  ];
+
+  return (
+    <div style={{
+      minHeight: "100vh",
+      background: "linear-gradient(160deg, #fff5f7 0%, #fce4ec 30%, #f8e8ee 60%, #f5f0f5 100%)",
+      fontFamily: "'Outfit', sans-serif", position: "relative",
+    }}>
+      <Petals />
+
+      {/* Header */}
+      <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "16px 16px 0" }}>
+        <h1 style={{ fontSize: 30, fontWeight: 700, color: "#5a3a48", margin: 0, letterSpacing: 1 }}>
+          Okameinko Cards
+        </h1>
+        <p style={{ fontFamily: "'Noto Sans JP', sans-serif", color: "#c4a0aa", fontSize: 22, marginTop: 2 }}>おかめいんこ かーどず</p>
+        <p style={{ color: "#b08a94", fontSize: 12, marginTop: 4 }}>hiragana flashcards</p>
+
+        <div style={{ display: "flex", justifyContent: "center", gap: 4, marginTop: 16 }}>
+          {tabs.map(t => (
+            <button key={t.id}
+              onClick={() => { setPage(t.id); if (t.id === "learn") setMode(null); }}
+              style={{
+                padding: "8px 22px", border: "none", borderRadius: "12px 12px 0 0",
+                background: page === t.id ? "rgba(255,255,255,0.7)" : "transparent",
+                color: page === t.id ? "#5a3a48" : "#b08a94",
+                fontWeight: page === t.id ? 600 : 400, cursor: "pointer", fontSize: 14,
+                fontFamily: "'Outfit', sans-serif", transition: "all .2s",
+              }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{ position: "relative", zIndex: 1, padding: "16px 16px 24px" }}>
+        {page === "manage" ? (
+          <WordManager words={words} setWords={setWords} />
+        ) : mode === null ? (
+          <div className="fade-in" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, marginTop: 8 }}>
+            <p style={{ color: "#8b5e6b", fontSize: 17, margin: 0 }}>Choose practice mode:</p>
+            <button onClick={() => setMode(1)} style={{
+              ...btnPrimary, width: 400, maxWidth: "90vw", padding: "22px 28px", fontSize: 18,
+              textAlign: "left", display: "flex", alignItems: "center", gap: 18,
+            }}>
+              <span style={{ fontSize: 42, fontFamily: "'Noto Sans JP', sans-serif" }}>あ</span>
+              <span>
+                <strong>Hiragana → English</strong><br />
+                <span style={{ fontSize: 13, opacity: 0.85 }}>See hiragana, guess meaning</span>
+              </span>
+            </button>
+            <button onClick={() => setMode(2)} style={{
+              ...btnGhost, width: 400, maxWidth: "90vw", padding: "22px 28px", fontSize: 18,
+              textAlign: "left", display: "flex", alignItems: "center", gap: 18,
+            }}>
+              <span style={{ fontSize: 42 }}>A</span>
+              <span>
+                <strong>English → Hiragana</strong><br />
+                <span style={{ fontSize: 13, opacity: 0.85 }}>See English, write hiragana</span>
+              </span>
+            </button>
+          </div>
+        ) : (
+          <div>
+            <div style={{ textAlign: "center", marginBottom: 16 }}>
+              <button onClick={() => setMode(null)} style={{
+                background: "none", border: "none", color: "#b08a94",
+                cursor: "pointer", fontSize: 13, fontFamily: "'Outfit', sans-serif",
+              }}>
+                ← back to modes
+              </button>
+            </div>
+            {mode === 1 ? <ModeHiragana words={words} /> : <ModeEnglish words={words} />}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
