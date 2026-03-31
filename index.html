@@ -35,44 +35,6 @@ const { useState, useEffect, useRef } = React;
 const DEFAULT_WORDS = [
   { hiragana: "ねこ", romaji: "neko", english: "cat" },
   { hiragana: "いぬ", romaji: "inu", english: "dog" },
-  { hiragana: "みず", romaji: "mizu", english: "water" },
-  { hiragana: "ひ", romaji: "hi", english: "fire" },
-  { hiragana: "やま", romaji: "yama", english: "mountain" },
-  { hiragana: "かわ", romaji: "kawa", english: "river" },
-  { hiragana: "はな", romaji: "hana", english: "flower" },
-  { hiragana: "つき", romaji: "tsuki", english: "moon" },
-  { hiragana: "ほし", romaji: "hoshi", english: "star" },
-  { hiragana: "あめ", romaji: "ame", english: "rain" },
-  { hiragana: "かぜ", romaji: "kaze", english: "wind" },
-  { hiragana: "そら", romaji: "sora", english: "sky" },
-  { hiragana: "うみ", romaji: "umi", english: "sea" },
-  { hiragana: "き", romaji: "ki", english: "tree" },
-  { hiragana: "くも", romaji: "kumo", english: "cloud" },
-  { hiragana: "ゆき", romaji: "yuki", english: "snow" },
-  { hiragana: "たべもの", romaji: "tabemono", english: "food" },
-  { hiragana: "のみもの", romaji: "nomimono", english: "drink" },
-  { hiragana: "ともだち", romaji: "tomodachi", english: "friend" },
-  { hiragana: "せんせい", romaji: "sensei", english: "teacher" },
-  { hiragana: "がくせい", romaji: "gakusei", english: "student" },
-  { hiragana: "しごと", romaji: "shigoto", english: "work" },
-  { hiragana: "いえ", romaji: "ie", english: "house" },
-  { hiragana: "まち", romaji: "machi", english: "town" },
-  { hiragana: "くるま", romaji: "kuruma", english: "car" },
-  { hiragana: "でんしゃ", romaji: "densha", english: "train" },
-  { hiragana: "ほん", romaji: "hon", english: "book" },
-  { hiragana: "おんがく", romaji: "ongaku", english: "music" },
-  { hiragana: "えいが", romaji: "eiga", english: "movie" },
-  { hiragana: "あさ", romaji: "asa", english: "morning" },
-  { hiragana: "よる", romaji: "yoru", english: "night" },
-  { hiragana: "きょう", romaji: "kyou", english: "today" },
-  { hiragana: "あした", romaji: "ashita", english: "tomorrow" },
-  { hiragana: "おおきい", romaji: "ookii", english: "big" },
-  { hiragana: "ちいさい", romaji: "chiisai", english: "small" },
-  { hiragana: "あたらしい", romaji: "atarashii", english: "new" },
-  { hiragana: "ふるい", romaji: "furui", english: "old" },
-  { hiragana: "たかい", romaji: "takai", english: "expensive / tall" },
-  { hiragana: "やすい", romaji: "yasui", english: "cheap" },
-  { hiragana: "おいしい", romaji: "oishii", english: "delicious" },
 ];
 
 const HIRAGANA_CHARS = [
@@ -273,7 +235,7 @@ function ModeHiragana({ words }) {
           <div>
             <label style={{ fontSize: 12, color: "#8b5e6b", display: "block", marginBottom: 4 }}>Romaji</label>
             <input ref={romajiRef} value={romajiInput} onChange={e => setRomajiInput(e.target.value)}
-              onKeyDown={handleKeyDown} disabled={revealed} placeholder="e.g. neko"
+              onKeyDown={handleKeyDown} disabled={revealed}
               style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px",
                 border: "1px solid rgba(219,112,147,0.3)", borderRadius: 10, fontSize: 16,
                 outline: "none", background: revealed ? "rgba(255,255,255,0.5)" : "white",
@@ -283,7 +245,7 @@ function ModeHiragana({ words }) {
           <div>
             <label style={{ fontSize: 12, color: "#8b5e6b", display: "block", marginBottom: 4 }}>English meaning</label>
             <input value={englishInput} onChange={e => setEnglishInput(e.target.value)}
-              onKeyDown={handleKeyDown} disabled={revealed} placeholder="e.g. cat"
+              onKeyDown={handleKeyDown} disabled={revealed}
               style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px",
                 border: "1px solid rgba(219,112,147,0.3)", borderRadius: 10, fontSize: 16,
                 outline: "none", background: revealed ? "rgba(255,255,255,0.5)" : "white",
@@ -370,7 +332,7 @@ function ModeEnglish({ words }) {
           <div>
             <label style={{ fontSize: 12, color: "#8b5e6b", display: "block", marginBottom: 4 }}>Romaji</label>
             <input ref={romajiRef} value={romajiInput} onChange={e => setRomajiInput(e.target.value)}
-              onKeyDown={handleKeyDown} disabled={revealed} placeholder="e.g. neko"
+              onKeyDown={handleKeyDown} disabled={revealed}
               style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px",
                 border: "1px solid rgba(219,112,147,0.3)", borderRadius: 10, fontSize: 16,
                 outline: "none", background: revealed ? "rgba(255,255,255,0.5)" : "white",
@@ -382,7 +344,7 @@ function ModeEnglish({ words }) {
               Hiragana (type or use keyboard)
             </label>
             <input value={hiraganaInput} onChange={e => setHiraganaInput(e.target.value)}
-              onKeyDown={handleKeyDown} disabled={revealed} placeholder="e.g. ねこ"
+              onKeyDown={handleKeyDown} disabled={revealed}
               style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px",
                 border: "1px solid rgba(219,112,147,0.3)", borderRadius: 10, fontSize: 20,
                 outline: "none", background: revealed ? "rgba(255,255,255,0.5)" : "white",
